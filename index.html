@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Big Data Ingestion Explorer</title>
+     <script src="https://cdn.tailwindcss.com"></script>
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+     <style>
+          body {
+               font-family: 'Inter', sans-serif;
+               background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+               color: #374151;
+               min-height: 100vh;
+          }
+
+          .chart-container {
+               position: relative;
+               width: 100%;
+               max-width: 600px;
+               margin-left: auto;
+               margin-right: auto;
+               height: 300px;
+               max-height: 400px;
+          }
+
+          @media (min-width: 768px) {
+               .chart-container {
+                    height: 350px;
+               }
+          }
+
+          .nav-button {
+               @apply px-6 py-3 font-semibold text-sm md:text-base transition-all duration-300 border-b-2 border-transparent rounded-t-lg;
+          }
+
+          .nav-button.active {
+               @apply text-white bg-blue-600 border-blue-600 shadow-md;
+          }
+
+          .nav-button:not(.active) {
+               @apply text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-300 hover:scale-105 hover:shadow-md transform transition-all duration-300;
+          }
+
+          .content-section {
+               @apply bg-white p-6 md:p-8 rounded-xl border border-gray-200 mt-6 shadow-lg hover:shadow-xl transition-shadow duration-300;
+          }
+
+          .flow-box {
+               @apply p-4 rounded-lg border-2 text-center font-semibold shadow-md hover:shadow-lg transition-shadow duration-300;
+          }
+
+          .flow-arrow {
+               @apply text-3xl font-bold text-gray-300 mx-2;
+          }
+
+          .filter-button {
+               @apply px-6 py-2 font-medium text-sm rounded-lg transition-all duration-300 border shadow-sm;
+          }
+
+          .filter-button.active {
+               @apply bg-blue-600 text-white border-blue-600 shadow-md;
+          }
+
+          .filter-button:not(.active) {
+               @apply bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-400;
+          }
+
+          .loader {
+               border: 4px solid #e5e7eb;
+               border-top: 4px solid #4f46e5;
+               border-radius: 50%;
+               width: 40px;
+               height: 40px;
+               animation: spin 1s linear infinite;
+               margin: 20px auto;
+          }
+
+          @keyframes spin {
+               0% {
+                    transform: rotate(0deg);
+               }
+
+               100% {
+                    transform: rotate(360deg);
+               }
+          }
+
+          .recommendation-box {
+               @apply bg-gray-50 p-6 rounded-lg mt-6 border border-gray-200;
+               line-height: 1.6;
+               color: #374151;
+          }
+
+          .recommendation-box h1,
+          .recommendation-box h2,
+          .recommendation-box h3 {
+               font-size: 1.25rem;
+               font-weight: 600;
+               color: #111827;
+               margin-bottom: 0.75rem;
+               margin-top: 1rem;
+          }
+
+          .recommendation-box strong {
+               font-weight: 600;
+               color: #1f2937;
+          }
+
+          .recommendation-box ul {
+               list-style-type: disc;
+               list-style-position: inside;
+               margin-top: 0.75rem;
+               margin-bottom: 0.75rem;
+               padding-left: 0.5rem;
+          }
+
+          .recommendation-box li {
+               margin-bottom: 0.25rem;
+          }
+
+          .recommendation-box p {
+               margin-bottom: 0.75rem;
+          }
+
+          a:hover {
+               color: #2563eb !important;
+               text-decoration: underline;
+               transform: translateY(-1px);
+               transition: all 0.3s ease;
+          }
+     </style>
+</head>
+
+<body class="bg-white">
+
+     <div class="max-w-7xl mx-auto p-6 md:p-12">
+          <header class="text-center mb-12 bg-white bg-opacity-80 backdrop-blur-sm rounded-2xl p-8 shadow-lg mx-4">
+               <h1 class="text-5xl font-bold text-gray-900">Big Data Ingestion Pipeline Explorer</h1>
+               <p class="text-xl text-gray-600 mt-4">An interactive guide to Flume, Kafka, and Sqoop</p>
+          </header>
+
+          <nav class="flex flex-wrap justify-center gap-4 md:gap-6 mb-12 border-b border-gray-200">
+               <button class="nav-button active" data-target="overview">Overview</button>
+               <button class="nav-button" data-target="sqoop">Batch: Sqoop</button>
+               <button class="nav-button" data-target="flume">Real-Time: Flume</button>
+               <button class="nav-button" data-target="kafka">Streaming: Kafka</button>
+               <button class="nav-button" data-target="compare">Compare Tools</button>
+               <button class="nav-button" data-target="recommender">✨ Recommender</button>
+          </nav>
+
+          <main>
+               <section id="overview" class="content-section">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">What is Data Ingestion? </h2>
+                    <p class="text-gray-700 mb-6">Data Ingestion is the crucial first step in any Big Data workflow.
+                         It's the process of moving data from hundreds or thousands of different sources into a
+                         centralized system, like the Hadoop Distributed File System (HDFS), where it can be stored and
+                         analyzed. This section provides a high-level overview of the two main strategies: Batch and
+                         Real-Time.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <div>
+                              <h3 class="text-xl font-semibold text-gray-800 mb-2">Batch Ingestion</h3>
+                              <p class="text-gray-700 mb-4">Data is collected and processed in large, periodic "batches"
+                                   (e.g., hourly, daily). This is ideal for high-volume, non-urgent data where
+                                   throughput is more important than speed. Think of it like collecting all your mail
+                                   for the week and opening it on Saturday.</p>
+                              <ul class="list-disc list-inside text-gray-700 space-y-1">
+                                   <li><strong>Key Tool:</strong> Sqoop</li>
+                                   <li><strong>Use Case:</strong> Moving daily sales logs, importing legacy databases.
+                                   </li>
+                                   <li><strong>Pro:</strong> High throughput, reliable for massive datasets.</li>
+                                   <li><strong>Con:</strong> High latency (data is not fresh).</li>
+                              </ul>
+                         </div>
+                         <div>
+                              <h3 class="text-xl font-semibold text-gray-800 mb-2">Real-Time (Streaming) Ingestion</h3>
+                              <p class="text-gray-700 mb-4">Data is collected and processed continuously as it's
+                                   generated, often in milliseconds. This is critical for use cases that require
+                                   immediate action or insights. Think of it as reading text messages the moment they
+                                   arrive.</p>
+                              <ul class="list-disc list-inside text-gray-700 space-y-1">
+                                   <li><strong>Key Tools:</strong> Flume, Kafka</li>
+                                   <li><strong>Use Case:</strong> Social media feeds, sensor data, fraud detection.</li>
+                                   <li><strong>Pro:</strong> Extremely low latency (fresh data).</li>
+                                   <li><strong>Con:</strong> More complex to manage, can be resource-intensive.</li>
+                              </ul>
+                         </div>
+                    </div>
+                    <div class="mt-10">
+                         <h3 class="text-xl font-semibold text-gray-800 text-center mb-4">Batch vs. Real-Time: Key
+                              Trade-offs</h3>
+                         <div class="chart-container h-[300px] md:h-[350px]">
+                              <canvas id="overviewChart"></canvas>
+                         </div>
+                    </div>
+               </section>
+
+               <section id="sqoop" class="content-section hidden">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Batch Ingestion: Apache Sqoop</h2>
+                    <p class="text-gray-700 mb-6">Apache Sqoop (SQL-to-Hadoop) is the specialized tool for bulk data
+                         transfer between structured data sources (like relational databases) and Hadoop. It is *not*
+                         for streaming data. Its job is to efficiently "scoop" massive tables from a database (like
+                         MySQL or Oracle) and dump them into HDFS or Hive. It does this by creating MapReduce jobs in
+                         the background, parallelizing the data transfer.</p>
+                    <h3 class="text-xl font-semibold text-gray-800 text-center mb-6">How Sqoop Works: The Import Process
+                    </h3>
+                    <div class="p-6 bg-gray-50 rounded-lg overflow-x-auto">
+                         <div
+                              class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                              <div class="flow-box border-green-500 text-green-700 w-48">
+                                   <strong>Source:</strong><br>Relational Database (e.g., MySQL, Oracle)
+                              </div>
+                              <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                              <div class="flow-box border-blue-500 text-blue-700 w-48">
+                                   <strong>Process:</strong><br>Sqoop Import Command
+                              </div>
+                              <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                              <div class="flow-box border-gray-500 text-gray-700 w-48">
+                                   <strong>Engine:</strong><br>Generates MapReduce Job
+                              </div>
+                              <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                              <div class="flow-box border-yellow-500 text-yellow-700 w-48">
+                                   <strong>Destination:</strong><br>Hadoop (HDFS, Hive, HBase)
+                              </div>
+                         </div>
+                    </div>
+               </section>
+
+               <section id="flume" class="content-section hidden">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Real-Time Collection: Apache Flume</h2>
+                    <p class="text-gray-700 mb-6">Apache Flume is a distributed, reliable service for efficiently
+                         collecting, aggregating, and moving large amounts of streaming data, especially log data. It's
+                         designed for real-time collection. Its architecture is based on "Flume Agents," which are
+                         independent processes. Each agent is composed of three key parts: a Source, a Channel, and a
+                         Sink.</p>
+                    <h3 class="text-xl font-semibold text-gray-800 text-center mb-6">Flume Agent Architecture (HTML/CSS
+                         Diagram)</h3>
+                    <div class="p-6 bg-gray-50 rounded-lg overflow-x-auto">
+                         <div
+                              class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                              <div class="flex flex-col items-center">
+                                   <div class="flow-box border-red-500 text-red-700 w-48"><strong>Data
+                                             Source</strong><br>(e.g., Web Server Logs)</div>
+                              </div>
+                              <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                              <div
+                                   class="p-4 border-2 border-dashed border-gray-400 rounded-lg bg-white w-full md:w-auto">
+                                   <h3 class="text-center font-semibold text-gray-700 mb-2">Flume Agent</h3>
+                                   <div class="flex flex-col md:flex-row items-center">
+                                        <div class="flow-box border-blue-500 text-blue-700 w-40 m-2">
+                                             <strong>Source</strong><br>(Listens)
+                                        </div>
+                                        <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                                        <div class="flow-box border-yellow-500 text-yellow-700 w-40 m-2">
+                                             <strong>Channel</strong><br>(Buffers)
+                                        </div>
+                                        <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                                        <div class="flow-box border-green-500 text-green-700 w-40 m-2">
+                                             <strong>Sink</strong><br>(Writes)
+                                        </div>
+                                   </div>
+                              </div>
+                              <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                              <div class="flex flex-col items-center">
+                                   <div class="flow-box border-gray-500 text-gray-700 w-48">
+                                        <strong>Destination</strong><br>(e.g., HDFS or Kafka)
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </section>
+
+               <section id="kafka" class="content-section hidden">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Streaming Platform: Apache Kafka</h2>
+                    <p class="text-gray-700 mb-6">Apache Kafka is more than just an ingestion tool; it's a distributed
+                         *streaming platform*. It acts as a massive, fault-tolerant, scalable "buffer" or "central
+                         nervous system" for data. Its key feature is the "publish-subscribe" model. Producers write
+                         data to "Topics," and Consumers read from those "Topics" at their own pace. This *decouples*
+                         your data sources from your data processors, making your entire architecture more resilient and
+                         flexible. Flume is often used to push data *into* Kafka.</p>
+                    <h3 class="text-xl font-semibold text-gray-800 text-center mb-6">Kafka's Publish-Subscribe Model
+                         (HTML/CSS Diagram)</h3>
+                    <div class="p-6 bg-gray-50 rounded-lg overflow-x-auto">
+                         <div class="flex flex-col md:flex-row items-center justify-between">
+                              <div class="flex flex-col space-y-4">
+                                   <div class="flow-box border-red-500 text-red-700 w-48">Producer 1 (Web App)</div>
+                                   <div class="flow-box border-red-500 text-red-700 w-48">Producer 2 (Flume Agent)</div>
+                                   <div class="flow-box border-red-500 text-red-700 w-48">Producer 3 (IoT Device)</div>
+                              </div>
+                              <div class="flex flex-col items-center space-y-2 my-4 md:my-0">
+                                   <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                                   <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                                   <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                              </div>
+                              <div class="p-4 border-2 border-dashed border-gray-400 rounded-lg bg-white mx-4">
+                                   <h3 class="text-center font-semibold text-gray-700 mb-2">Kafka Cluster (Broker)</h3>
+                                   <div class="flow-box border-gray-500 text-gray-700 w-64">Topic A (Clickstream)</div>
+                                   <div class="flow-box border-gray-500 text-gray-700 w-64 mt-2">Topic B (Log Data)
+                                   </div>
+                              </div>
+                              <div class="flex flex-col items-center space-y-2 my-4 md:my-0">
+                                   <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                                   <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                                   <div class="flow-arrow transform rotate-90 md:rotate-0">➔</div>
+                              </div>
+                              <div class="flex flex-col space-y-4">
+                                   <div class="flow-box border-green-500 text-green-700 w-48">Consumer 1 (Spark)</div>
+                                   <div class="flow-box border-green-500 text-green-700 w-48">Consumer 2 (HDFS Sink)
+                                   </div>
+                                   <div class="flow-box border-green-500 text-green-700 w-48">Consumer 3 (Analytics DB)
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </section>
+
+               <section id="compare" class="content-section hidden">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Compare Tools</h2>
+                    <p class="text-gray-700 mb-6">Evaluating and comparing ecosystem components is a critical skill. No
+                         single tool is "best"; they are designed for different jobs. Sqoop is for batch database
+                         transfers. Flume is for real-time log collection. Kafka is a durable, scalable buffer for
+                         streaming data. Use this chart to compare them across key attributes. Click the buttons to add
+                         or remove tools from the comparison.</p>
+
+                    <div class="flex flex-wrap justify-center gap-2 mb-6" id="filter-buttons">
+                         <button class="filter-button active" data-filter="all">Show All</button>
+                         <button class="filter-button" data-filter="sqoop">Sqoop Only</button>
+                         <button class="filter-button" data-filter="flume">Flume Only</button>
+                         <button class="filter-button" data-filter="kafka">Kafka Only</button>
+                    </div>
+
+                    <div class="chart-container h-80 md:h-96 max-h-[500px]">
+                         <canvas id="compareChart"></canvas>
+                    </div>
+                    <div class="text-center text-sm text-gray-600 mt-4">*Data Type: 10 = Structured (DBs), 5 =
+                         Semi-Structured, 2 = Unstructured (Logs). Latency: 10 = Low (Fast), 2 = High (Slow).</div>
+               </section>
+
+               <section id="recommender" class="content-section hidden">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">✨ AI Pipeline Recommender</h2>
+                    <p class="text-gray-700 mb-6">Want to know which tools to use for your project? Describe your data
+                         challenge, and our AI Architect (powered by the Gemini API) will recommend a pipeline and
+                         justify its choices, helping you apply and evaluate these tools.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                         <div>
+                              <label for="data-source" class="block text-sm font-medium text-gray-700">Data Source
+                                   Type</label>
+                              <select id="data-source"
+                                   class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                   <option>Relational Database (e.g., MySQL)</option>
+                                   <option>Real-time Web Server Logs</option>
+                                   <option>Social Media Feed Stream</option>
+                                   <option>IoT Sensor Data (High Velocity)</option>
+                                   <option>Daily CSV/JSON Files</option>
+                              </select>
+                         </div>
+                         <div>
+                              <label for="data-volume" class="block text-sm font-medium text-gray-700">Data Volume /
+                                   Velocity</label>
+                              <select id="data-volume"
+                                   class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                   <option>Low (e.g., 1000s of records/day)</option>
+                                   <option>Medium (e.g., Millions of records/day)</option>
+                                   <option>High (e.g., 10,000+ events/second)</option>
+                              </select>
+                         </div>
+                         <div>
+                              <label for="data-latency" class="block text-sm font-medium text-gray-700">Latency
+                                   Requirement</label>
+                              <select id="data-latency"
+                                   class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                   <option>Batch (Daily or Hourly)</option>
+                                   <option>Near Real-Time (Minutes)</option>
+                                   <option>Real-Time (Seconds or less)</option>
+                              </select>
+                         </div>
+                    </div>
+
+                    <div class="text-center">
+                         <button id="recommend-button"
+                              class="px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                              ✨ Recommend My Pipeline
+                         </button>
+                    </div>
+
+                    <div id="loader" class="loader hidden"></div>
+
+                    <div id="recommendation-output" class="recommendation-box hidden">
+                    </div>
+               </section>
+          </main>
+
+          <footer class="text-center mt-16 p-4 border-t border-gray-200">
+               <p class="text-gray-500">Interactive SPA for Big Data Analysis. Created by <a
+                         href="https://www.github.com/np-nandanpatil/" target="_blank">@np-nandanpatil</a>/<a
+                         href="https://www.linkedin.com/in/nandanpatilm" target="_blank">@nandanpatilm</a></p>
+               <p>An AAT Report Presented in partial fulfillment of the requirements for the degree of <br> B.E. in
+                    Information Science & Engineering at M V J College of Engineering, Bengaluru.</p>
+
+          </footer>
+
+     </div>
+
+     <script>
+          document.addEventListener('DOMContentLoaded', () => {
+               const navButtons = document.querySelectorAll('.nav-button');
+               const contentSections = document.querySelectorAll('.content-section');
+
+               navButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                         const targetId = button.dataset.target;
+
+                         navButtons.forEach(btn => btn.classList.remove('active'));
+                         button.classList.add('active');
+
+                         contentSections.forEach(section => {
+                              if (section.id === targetId) {
+                                   section.classList.remove('hidden');
+                              } else {
+                                   section.classList.add('hidden');
+                              }
+                         });
+                    });
+               });
+
+               const renderLabel = (label) => {
+                    if (typeof label === 'string' && label.length > 16) {
+                         const words = label.split(' ');
+                         const lines = [];
+                         let currentLine = '';
+                         words.forEach(word => {
+                              if ((currentLine + word).length > 16) {
+                                   lines.push(currentLine.trim());
+                                   currentLine = word + ' ';
+                              } else {
+                                   currentLine += word + ' ';
+                              }
+                         });
+                         lines.push(currentLine.trim());
+                         return lines;
+                    }
+                    return label;
+               };
+
+               const tooltipTitleCallback = (tooltipItems) => {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    if (Array.isArray(label)) {
+                         return label.join(' ');
+                    } else {
+                         return label;
+                    }
+               };
+
+               const commonTooltipOptions = {
+                    plugins: {
+                         tooltip: {
+                              callbacks: {
+                                   title: tooltipTitleCallback
+                              }
+                         }
+                    }
+               };
+
+               const overviewCtx = document.getElementById('overviewChart');
+               if (overviewCtx) {
+                    new Chart(overviewCtx, {
+                         type: 'bar',
+                         data: {
+                              labels: ['Latency (Speed)', 'Throughput (Volume)'],
+                              datasets: [
+                                   {
+                                        label: 'Batch Ingestion',
+                                        data: [2, 9],
+                                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                                        borderColor: 'rgba(59, 130, 246, 1)',
+                                        borderWidth: 2,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                   },
+                                   {
+                                        label: 'Real-Time Ingestion',
+                                        data: [9, 5],
+                                        backgroundColor: 'rgba(147, 51, 234, 0.8)',
+                                        borderColor: 'rgba(147, 51, 234, 1)',
+                                        borderWidth: 2,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                   }
+                              ]
+                         },
+                         options: {
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              ...commonTooltipOptions,
+                              scales: {
+                                   y: {
+                                        beginAtZero: true,
+                                        max: 10,
+                                        title: { display: true, text: 'Relative Score (1-10)' }
+                                   }
+                              },
+                              plugins: {
+                                   ...commonTooltipOptions.plugins,
+                                   title: { display: true, text: 'Batch vs. Real-Time Trade-offs' }
+                              }
+                         }
+                    });
+               }
+
+               const compareCtx = document.getElementById('compareChart');
+               let compareChart;
+               const compareData = {
+                    sqoop: {
+                         label: 'Sqoop',
+                         data: [6, 2, 9, 8, 10],
+                         backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                         borderColor: 'rgba(59, 130, 246, 1)',
+                         pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                         pointBorderColor: '#ffffff',
+                         pointBorderWidth: 2,
+                         pointRadius: 6,
+                         pointHoverRadius: 8,
+                    },
+                    flume: {
+                         label: 'Flume',
+                         data: [7, 8, 6, 5, 2],
+                         backgroundColor: 'rgba(16, 185, 129, 0.3)',
+                         borderColor: 'rgba(16, 185, 129, 1)',
+                         pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                         pointBorderColor: '#ffffff',
+                         pointBorderWidth: 2,
+                         pointRadius: 6,
+                         pointHoverRadius: 8,
+                    },
+                    kafka: {
+                         label: 'Kafka',
+                         data: [10, 10, 8, 10, 5],
+                         backgroundColor: 'rgba(147, 51, 234, 0.3)',
+                         borderColor: 'rgba(147, 51, 234, 1)',
+                         pointBackgroundColor: 'rgba(147, 51, 234, 1)',
+                         pointBorderColor: '#ffffff',
+                         pointBorderWidth: 2,
+                         pointRadius: 6,
+                         pointHoverRadius: 8,
+                    }
+               };
+
+               if (compareCtx) {
+                    compareChart = new Chart(compareCtx, {
+                         type: 'radar',
+                         data: {
+                              labels: ['Scalability', 'Latency (Low)', 'Throughput', 'Durability', 'Data Type (Flexibility)'],
+                              datasets: [compareData.sqoop, compareData.flume, compareData.kafka]
+                         },
+                         options: {
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              ...commonTooltipOptions,
+                              scales: {
+                                   r: {
+                                        beginAtZero: true,
+                                        max: 10,
+                                        ticks: { stepSize: 2 }
+                                   }
+                              },
+                              plugins: {
+                                   ...commonTooltipOptions.plugins,
+                                   title: { display: true, text: 'Tool Comparison (1-10 Scale)' }
+                              }
+                         }
+                    });
+               }
+
+               const filterButtons = document.querySelectorAll('.filter-button');
+               filterButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                         const filter = button.dataset.filter;
+
+                         filterButtons.forEach(btn => btn.classList.remove('active'));
+                         button.classList.add('active');
+
+                         if (filter === 'all') {
+                              compareChart.data.datasets = [compareData.sqoop, compareData.flume, compareData.kafka];
+                         } else if (filter === 'sqoop') {
+                              compareChart.data.datasets = [compareData.sqoop];
+                         } else if (filter === 'flume') {
+                              compareChart.data.datasets = [compareData.flume];
+                         } else if (filter === 'kafka') {
+                              compareChart.data.datasets = [compareData.kafka];
+                         }
+                         compareChart.update();
+                    });
+               });
+
+               const recommendButton = document.getElementById('recommend-button');
+               const loader = document.getElementById('loader');
+               const outputBox = document.getElementById('recommendation-output');
+
+               const fetchWithRetry = async (url, options, retries = 3, delay = 1000) => {
+                    for (let i = 0; i < retries; i++) {
+                         try {
+                              const response = await fetch(url, options);
+                              if (!response.ok) {
+                                   throw new Error(`HTTP error! status: ${response.status}`);
+                              }
+                              return await response.json();
+                         } catch (error) {
+                              if (i === retries - 1) throw error;
+                              await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                         }
+                    }
+               };
+
+               const geminiApiCall = async () => {
+                    const source = document.getElementById('data-source').value;
+                    const volume = document.getElementById('data-volume').value;
+                    const latency = document.getElementById('data-latency').value;
+
+                    loader.classList.remove('hidden');
+                    outputBox.classList.add('hidden');
+                    outputBox.innerHTML = '';
+
+                    const systemPrompt = `Act as an expert big data architect. Your task is to recommend an ingestion pipeline using only Apache Sqoop, Apache Flume, and/or Apache Kafka.
+                
+                The user will provide:
+                1. Data Source
+                2. Data Volume/Velocity
+                3. Latency Requirement
+                
+                You must provide:
+                1.  **Recommended Pipeline:** Clearly state which tools (Sqoop, Flume, Kafka) to use and how they connect.
+                2.  **Justification:** Explain *why* you chose each tool based on the user's requirements, referencing the strengths of each. For example, why Sqoop for batch, or why Kafka is needed as a buffer.
+                
+                Keep the explanation clear, concise, and formatted with markdown (e.g., **bolding** and * lists).
+                **IMPORTANT**: Do not use any LaTeX or \`$$\` notation. Use simple text (e.g., '->') for arrows.`;
+
+                    const userQuery = `Data Source: ${source}\nData Volume: ${volume}\nLatency Requirement: ${latency}`;
+
+                    const apiKey = "AIzaSyBAWtg3NyV6mk5r77JclS_QIy2kobT4BZE";
+                    // const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    const payload = {
+                         contents: [{ parts: [{ text: userQuery }] }],
+                         systemInstruction: {
+                              parts: [{ text: systemPrompt }]
+                         },
+                    };
+
+                    try {
+                         const result = await fetchWithRetry(apiUrl, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload)
+                         });
+
+                         const candidate = result.candidates?.[0];
+                         if (candidate && candidate.content?.parts?.[0]?.text) {
+                              const rawMarkdown = candidate.content.parts[0].text;
+                              outputBox.innerHTML = marked.parse(rawMarkdown);
+                         } else {
+                              outputBox.textContent = 'Error: Received an empty or invalid response from the API.';
+                         }
+                    } catch (error) {
+                         console.error("Error calling Gemini API:", error);
+                         outputBox.textContent = `Error: Could not get recommendation. ${error.message}\n\nPlease check your network connection and API configuration.`;
+                    } finally {
+                         loader.classList.add('hidden');
+                         outputBox.classList.remove('hidden');
+                    }
+               };
+
+               if (recommendButton) {
+                    recommendButton.addEventListener('click', geminiApiCall);
+               }
+
+          });
+     </script>
+</body>
+
+</html>
